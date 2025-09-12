@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-/*import '1.dart';*/
-/*import '2.dart';*/
-import '3.dart';
+/*import 'ex1.dart';*/
+/*import 'ex2.dart';*/
+import 'question_home_page.dart';
 
 void main() {
   runApp(const MyApp());
