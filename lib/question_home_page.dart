@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'questions_page.dart';
+import 'package:numberpicker/numberpicker.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -22,7 +23,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List questions = [];
   int categoriesCurrentValue = 0;
   String difficultiesCurrentValue = 'easy';
-  int questionAmount = 10;
+  int questionAmount = 1;
 
   void getCategories() async {
     Response response = await dio.get('https://opentdb.com/api_category.php');
@@ -65,6 +66,13 @@ class _MyHomePageState extends State<MyHomePage> {
           width: 400,
           child: Column(
             children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 20.0),
+                child: Text('Choose a categorie',
+                    style: TextStyle(
+                        color: Color.fromARGB(255, 139, 139, 139),
+                        fontSize: 20)),
+              ),
               DropdownButton(
                 value: categoriesCurrentValue,
                 icon: const Icon(Icons.menu),
@@ -77,6 +85,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     categoriesCurrentValue = newValue!;
                   });
                 },
+              ),
+              const Padding(
+                padding: EdgeInsets.only(top: 20.0),
+                child: Text('Choose a difficulty',
+                    style: TextStyle(
+                        color: Color.fromARGB(255, 139, 139, 139),
+                        fontSize: 20)),
               ),
               DropdownButton(
                 value: difficultiesCurrentValue,
@@ -91,17 +106,41 @@ class _MyHomePageState extends State<MyHomePage> {
                   });
                 },
               ),
+              const Padding(
+                padding: EdgeInsets.only(top: 20.0),
+                child: Text('Number of questions',
+                    style: TextStyle(
+                        color: Color.fromARGB(255, 139, 139, 139),
+                        fontSize: 20)),
+              ),
               Padding(
-                padding: const EdgeInsets.only(bottom: 20.0),
-                child: TextField(
-                    onChanged: (value) {
-                      setState(() {
-                        questionAmount = int.parse(value);
-                      });
-                    },
-                    keyboardType: TextInputType.number,
-                    decoration:
-                        InputDecoration(hintText: 'Number of questions')),
+                  padding: const EdgeInsets.only(bottom: 20.0),
+                  child: NumberPicker(
+                    minValue: 1,
+                    maxValue: 50,
+                    value: questionAmount,
+                    onChanged: (value) =>
+                        setState(() => questionAmount = value),
+                  )),
+              Padding(
+                padding: const EdgeInsets.only(left: 90.0),
+                child: Row(
+                  children: [
+                    IconButton(
+                        onPressed: () => setState(() {
+                              final newValue = questionAmount - 1;
+                              questionAmount = newValue.clamp(1, 50);
+                            }),
+                        icon: const Icon(Icons.remove)),
+                    Text('Number of questions : $questionAmount'),
+                    IconButton(
+                        onPressed: () => setState(() {
+                              final newValue = questionAmount + 1;
+                              questionAmount = newValue.clamp(1, 50);
+                            }),
+                        icon: const Icon(Icons.add))
+                  ],
+                ),
               ),
               OutlinedButton(
                   onPressed: () async {

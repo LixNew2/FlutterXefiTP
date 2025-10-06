@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:html_unescape/html_unescape.dart';
+import 'package:confetti/confetti.dart';
 
 class Questions extends StatefulWidget {
   const Questions({super.key, required this.title, required this.questions});
@@ -12,6 +13,7 @@ class Questions extends StatefulWidget {
 }
 
 class _QuestionsState extends State<Questions> {
+  late ConfettiController controllerCenter;
   List currentOption = [];
   List correctAnswers = [];
   List allAnswers = [];
@@ -27,7 +29,7 @@ class _QuestionsState extends State<Questions> {
       currentOption.add('');
       displayCorrectAnswer.add('');
       colors.add(Color.fromARGB(255, 150, 150, 150));
-      correctAnswers.add(widget.questions[i]['correct_answer']);
+      correctAnswers.add(htmlu.convert(widget.questions[i]['correct_answer']));
 
       List thisAnswers = widget.questions[i]['incorrect_answers'].map((item) {
         return htmlu.convert(item);
@@ -37,6 +39,9 @@ class _QuestionsState extends State<Questions> {
       thisAnswers.shuffle();
       allAnswers.add(thisAnswers);
     }
+
+    controllerCenter =
+        ConfettiController(duration: const Duration(seconds: 10));
   }
 
   void onChange(int index, String value) {
@@ -56,10 +61,20 @@ class _QuestionsState extends State<Questions> {
           colors[i] = Color.fromARGB(255, 192, 6, 0);
         }
         displayCorrectAnswer[i] = 'Correct answer : ${correctAnswers[i]}';
-        score =
-            'Score : $finalScore / ${widget.questions.length} | ${(finalScore * 100) / widget.questions.length}%';
+      }
+
+      score =
+          'Score : $finalScore / ${widget.questions.length} | ${(finalScore * 100) / widget.questions.length}%';
+      if (finalScore == widget.questions.length) {
+        controllerCenter.play();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    controllerCenter.dispose();
+    super.dispose();
   }
 
   @override
@@ -70,79 +85,108 @@ class _QuestionsState extends State<Questions> {
         title: Text(widget.title),
       ),
       body: Center(
-          child: Column(
+          child: Stack(
         children: [
-          Text(score),
-          Expanded(
-            child: ListView.builder(
-              itemCount: widget.questions.length,
-              itemBuilder: (context, index) {
-                return Card(
-                  color: colors[index],
-                  child: Column(
-                    children: [
-                      Row(
+          Column(
+            children: [
+              Text(score),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: widget.questions.length,
+                  itemBuilder: (context, index) {
+                    return Card(
+                      color: colors[index],
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              child: Text(
-                                htmlu.convert(
-                                    widget.questions[index]['question']),
-                                style: const TextStyle(
-                                    color: Color.fromARGB(255, 255, 255, 255)),
-                              ),
-                            ),
-                          ),
-                          Spacer(flex: 1),
-                          Padding(
-                            padding:
-                                const EdgeInsets.only(right: 8.0, top: 30.0),
-                            child: Text(displayCorrectAnswer[index],
-                                style: const TextStyle(
-                                    color: Color.fromARGB(255, 255, 255, 255))),
-                          )
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          ...allAnswers[index]
-                              .map<Widget>(
-                                (item) => Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: Row(
-                                    children: [
-                                      Radio(
-                                        activeColor: const Color.fromARGB(
-                                            255, 0, 119, 255),
-                                        value: item,
-                                        groupValue: currentOption[index],
-                                        onChanged: (value) {
-                                          onChange(index, value);
-                                        },
-                                      ),
-                                      Text(item,
-                                          style: const TextStyle(
-                                              color: Color.fromARGB(
-                                                  255, 255, 255, 255)))
-                                    ],
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: Text(
+                                    htmlu.convert(
+                                        widget.questions[index]['question']),
+                                    style: const TextStyle(
+                                        color:
+                                            Color.fromARGB(255, 255, 255, 255)),
                                   ),
                                 ),
+                              ),
+                              Spacer(flex: 1),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    right: 8.0, top: 30.0),
+                                child: Text(displayCorrectAnswer[index],
+                                    style: const TextStyle(
+                                        color: Color.fromARGB(
+                                            255, 255, 255, 255))),
                               )
-                              .toList()
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              ...allAnswers[index]
+                                  .map<Widget>(
+                                    (item) => Padding(
+                                      padding:
+                                          const EdgeInsets.only(right: 8.0),
+                                      child: Row(
+                                        children: [
+                                          Radio(
+                                            activeColor: const Color.fromARGB(
+                                                255, 0, 119, 255),
+                                            value: item,
+                                            groupValue: currentOption[index],
+                                            onChanged: (value) {
+                                              onChange(index, value);
+                                            },
+                                          ),
+                                          Text(item,
+                                              style: const TextStyle(
+                                                  color: Color.fromARGB(
+                                                      255, 255, 255, 255)))
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                  .toList()
+                            ],
+                          ),
                         ],
                       ),
-                    ],
-                  ),
-                );
-              },
+                    );
+                  },
+                ),
+              ),
+              OutlinedButton(
+                  onPressed: () {
+                    checkAnswers();
+                  },
+                  child: const Text('Submit')),
+            ],
+          ),
+          Positioned.fill(
+            child: Center(
+              child: ConfettiWidget(
+                confettiController: controllerCenter,
+                blastDirectionality: BlastDirectionality.explosive,
+                particleDrag: 0.05,
+                emissionFrequency: 0.05,
+                numberOfParticles: 20,
+                gravity: 0.05,
+                shouldLoop: false,
+                colors: const [
+                  Colors.green,
+                  Colors.blue,
+                  Colors.pink,
+                  Colors.orange,
+                  Colors.purple
+                ],
+                strokeWidth: 1,
+                strokeColor: Colors.white,
+              ),
             ),
           ),
-          OutlinedButton(
-              onPressed: () {
-                checkAnswers();
-              },
-              child: const Text('Submit')),
         ],
       )),
     );
